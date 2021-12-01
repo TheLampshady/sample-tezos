@@ -5,7 +5,7 @@ import requests
 THUMBNAIL = "https://tezostaquito.io/img/favicon.png"
 # SYM = "TUT"
 SYM = "OBJKT"
-FILENAME = "../image.jpeg"
+FILENAME = "../image.jpg"
 
 META_NAME="TUT-metadata"
 
