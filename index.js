@@ -15,10 +15,12 @@ const {BeaconWallet} = require("@taquito/beacon-wallet")
 const {NetworkType} = require("@airgap/beacon-sdk")
  */
 dotenv.config()
+if (process.argv.length < 3) throw "ipfs hash required"
+const args = process.argv.slice(2)
+const ipfsHash = args[0]
 let userAddress = process.env.WALLET_PUBLIC
 let private_key = process.env.WALLET_PRIVATE
-const contractAddress = "KT1APQC6Fuwx5MdEj2CC6ayvsS14qWtp4VVk";
-const ipfsHash = ""
+const contractAddress = "KT1APQC6Fuwx5MdEj2CC6ayvsS14qWtp4VVk"
 const ipfsUrl = "ipfs://" + ipfsHash
 
 let MAINNET = "https://mainnet.api.tez.ie"
@@ -30,7 +32,10 @@ let tezosClient = new TezosToolkit(RPC_URL);
 const signer = await InMemorySigner.fromSecretKey(private_key);
 tezosClient.setProvider({ signer: signer });
 
+try {
 const contract = await tezosClient.wallet.at(contractAddress);
 const op = await contract.methods.mint(char2Bytes(ipfsUrl), userAddress).send();
-
+} catch (e) {
+  console.log(e)
+}
 tezosClient.tz.getBalance(userAddress).then((balance) => console.log(`${balance.toNumber() / 1000000} ꜩ`)).catch((error) => console.log(JSON.stringify(error)));

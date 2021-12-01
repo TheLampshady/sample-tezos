@@ -3,7 +3,8 @@ import requests
 
 
 THUMBNAIL = "https://tezostaquito.io/img/favicon.png"
-SYM = "TUT"
+# SYM = "TUT"
+SYM = "OBJKT"
 FILENAME = "../image.jpeg"
 
 META_NAME="TUT-metadata"
@@ -19,8 +20,6 @@ class PinataClient:
         self.api_key = api_key
         self.secret_api_key = secret_api_key
         self.creator = creator
-
-
 
     @property
     def headers(self):
@@ -49,9 +48,10 @@ class PinataClient:
     def validate_file_response(resp: dict) -> bool:
         return resp.get("IpfsHash") and resp.get("PinSize", 0) > 0
 
-    def file_metadata(self, title: str, description: str) -> str:
+    def file_options(self, title: str, description: str) -> dict:
         """
         Creates the metadata for the file IPFS upload. Must be serialized JSON
+            TODO: Why does JSON not work for options here
         :param title: title of file
         :param description: a keyvalue for the metadata
         :return: str
@@ -60,7 +60,7 @@ class PinataClient:
         key_values = dict(description=description)
         metadata = dict(name=title_clean, keyvalues=key_values)
         self.validate_metadata(metadata)
-        return json.dumps(metadata)
+        return dict(pinataMetadata=json.dumps(metadata))
 
     def test_pinata(self) -> bool:
         """ Hits the Pinata test API"""
@@ -76,7 +76,7 @@ class PinataClient:
         :param file_name: Name of local file to open
         :return: str - the ipfs hash of the file
         """
-        options = dict(pinataMetadata=self.file_metadata(title, description))
+        options = self.file_options(title, description)
         files = {'file': open(file_name,'rb')}
         resp = requests.post(self.url_file, files=files, headers=self.headers, data=options)
         if not self.validate_file_response(resp.json()):
@@ -105,10 +105,10 @@ class PinataClient:
             shouldPreferSymbol=False
         )
         data = dict(
-            pinataContent=json.dumps(pinata_content),
-            pinataMetadata=json.dumps(dict(name=META_NAME))
+            pinataContent=pinata_content,
+            pinataMetadata=dict(name=META_NAME)
         )
-        resp = requests.post(self.url_json, headers=self.headers, data=data)
+        resp = requests.post(self.url_json, headers=self.headers, json=data)
         if not self.validate_file_response(resp.json()):
             raise ConnectionError("json was not pinned")
         return resp.json()['IpfsHash']

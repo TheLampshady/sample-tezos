@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 import os
+import sys
 from dotenv import load_dotenv
 
 from pinata_client import PinataClient
@@ -28,4 +30,5 @@ def run():
 
 if __name__ == "__main__":
     # from main import *
+    os.chdir(sys.path[0])
     print(run())
