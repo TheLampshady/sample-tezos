@@ -1,69 +1,31 @@
-import dotenv from "dotenv"
-import { TezosToolkit, MichelCodecPacker } from "@taquito/taquito";
-import { char2Bytes, bytes2Char } from "@taquito/utils";
-import { NetworkType } from "@airgasp/beacon-sdk";
+import { TezosToolkit } from '@taquito/taquito';
+import dotenv from "dotenv";
+import { InMemorySigner } from "@taquito/signer";
+import {char2Bytes} from "@taquito/utils";
 
 dotenv.config()
 if (process.argv.length < 3) throw "ipfs hash required"
 const args = process.argv.slice(2)
 const ipfsHash = args[0]
+// const ipfsHash ="Qmbip6vk75VKdEkneAKZYyr6R79y5n38p2oRup3w8L1M7K"
+let userAddress = process.env.WALLET_PUBLIC
+let private_key = process.env.WALLET_PRIVATE
+const contractAddress = "KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton"
+const ipfsUrl = "ipfs://" + ipfsHash
 
-const contractAddress = "KT1APQC6Fuwx5MdEj2CC6ayvsS14qWtp4VVk";
-const userAddress = process.env.WALLET_PUBLIC
+let MAINNET = "https://mainnet.api.tez.ie"
+let MAINNET_SMARTPY = "https://mainnet.smartpy.io/chains/main/blocks/head/header"
+let HANGNET = 'https://hangzhounet.api.tez.ie'
+let RPC_URL = MAINNET_SMARTPY
 
-// RPC Nodes
-// https://tezostaquito.io/docs/rpc_nodes/
-const MAINNET = "https://mainnet.api.tez.ie"
-const RPC_URL = MAINNET + ""
+let tezosClient = new TezosToolkit(RPC_URL);
 
-const permissionOptions = {
-  network: {
-    type: NetworkType.MAINNET,
-    RPC_URL
-  }
-}
+const signer = await InMemorySigner.fromSecretKey(private_key);
+tezosClient.setProvider({ signer: signer });
 
-const tezosClient = new TezosToolkit(RPC_URL);
-let wallet
-const walletOptions = {
-  name: "Illic et Numquam",
-  preferredNetwork: NetworkType.MAINNET
-};
-
-async function getUserNfts() {
-  const contract = await tezosClient.wallet.at(contractAddress);
-  const nftStorage = await contract.storage();
-  const getTokenIds = await nftStorage.reverse_ledger.get(address);
-  let userNfts = []
-  if (getTokenIds) {
-    userNfts = await Promise.all([
-      ...getTokenIds.map(async id => {
-        const tokenId = id.toNumber();
-        const metadata = await nftStorage.token_metadata.get(tokenId);
-        const tokenInfoBytes = metadata.token_info.get("");
-        const tokenInfo = bytes2Char(tokenInfoBytes);
-        return {
-          tokenId,
-          ipfsHash:
-            tokenInfo.slice(0, 7) === "ipfs://" ? tokenInfo.slice(7) : null
-        }
-      })
-    ])
-  }
-  return userNfts
-}
-
-
-async function mintNfts() {
-  const contract = await tezosClient.wallet.at(contractAddress);
-  const op = await contract.methods
-    .mint(char2Bytes("ipfs://" + ipfsHash), userAddress)
-    .send();
-  console.log("Op hash:", op.opHash);
-  await op.confirmation();
-  return op.opHash
-}
-
-async function connect() {
-
+try {
+const contract = await tezosClient.wallet.at(contractAddress);
+const op = await contract.methods.mint(char2Bytes(ipfsUrl), userAddress).send();
+} catch (e) {
+  console.log(e)
 }

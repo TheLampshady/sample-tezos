@@ -1,14 +1,23 @@
 import json
+import mimetypes
 import requests
 
 
 THUMBNAIL = "https://tezostaquito.io/img/favicon.png"
 # SYM = "TUT"
 SYM = "OBJKT"
+HEN_SYM = "OBJKT"
 FILENAME = "../image.jpg"
 
-META_NAME="TUT-metadata"
+META_NAME = "TUT-metadata"
 
+
+HEN_SCHEMA = {
+  "symbol": HEN_SYM,
+  "decimals": 0,
+  "isBooleanAmount": False,
+  "shouldPreferSymbol": False
+}
 
 class PinataClient:
     # Pinata Endpoints
@@ -27,6 +36,23 @@ class PinataClient:
             "pinata_api_key": self.api_key,
             "pinata_secret_api_key": self.secret_api_key,
         }
+
+    def get_json(self, name, description, image_url):
+        format_entry = dict(
+            uri=image_url,
+            mimetype= mimetypes.guess_type(FILENAME)[0]
+        )
+        data = dict(
+            name=name,
+            description=description,
+            artifactUri=image_url,
+            displayUri=image_url,
+            thumbnailUri=image_url,
+            creators=[self.creator],
+            tags=["Test"],
+            format=[format_entry],
+        )
+        return data.update(HEN_SCHEMA)
 
     @staticmethod
     def validate_metadata(metadata: dict):
